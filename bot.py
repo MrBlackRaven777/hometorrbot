@@ -1,10 +1,12 @@
 import telebot
 import os
 import config
+import sys
 from flask import Flask, request
 
 bot = telebot.TeleBot(config.token)
-print('Im here')
+print 'Im here'
+sys.stdout.flush()
 
 server = Flask(__name__)
 
