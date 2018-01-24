@@ -13,7 +13,23 @@ upd = Updater(token=config.token)
 dsp = upd.dispatcher
 
 
+def check_id(func_of_bot):
+    def wrapper(bot, upd):
+        if str(upd.message.chat_id) in config.allowed_id:
+            func_of_bot(bot, upd)
+        else:
+            bot.sendMessage(chat_id=upd.message.chat_id,
+                        text="You are not allowed to use this bot")
+            if config.notify_not_allowed == True:
+                bot.sendMessage(chat_id=config.admin_id,
+                            text="Кто-то стучится в дом, id=" + 
+                            str(upd.message.chat_id) + ", зовут " + 
+                            upd.message.from_user.first_name + " " +
+                            upd.message.from_user.last_name)
+    return wrapper
 
+
+@check_id
 def path(bot, upd):
     utils.pickle_write(upd.message.chat_id, "is_expl_on", False)
     fav_list = list(utils.pickle_read(upd.message.chat_id,'favorites').keys())
@@ -22,7 +38,8 @@ def path(bot, upd):
     bot.sendMessage(chat_id=upd.message.chat_id,
                     text="Choose folder from favorites, file system or cancel", reply_markup=markup, one_time_keyboard=True)
 
-  
+
+@check_id  
 def echo(bot, upd):
     msg = upd.message.text
     ch_id = upd.message.chat_id
@@ -33,15 +50,16 @@ def echo(bot, upd):
     dirs = next(os.walk(full_path))[1]
     if utils.pickle_read(ch_id,'is_expl_on') == True:
         if msg in dirs:
-            print(2)
+#            print(2)
             utils.pickle_write(ch_id, "curr_dir", full_path + "\\" + msg)
             answer = utils.explorer(ch_id, msg)
             markup = telegram.ReplyKeyboardMarkup(
                     utils.create_markup(answer, ch_id))
             answer = None
         elif msg == "Done":
-            answer = "Choosen folder: " +  utils.pickle_read(ch_id,'curr_dir')
-            markup = telegram.ReplyKeyboardRemove()
+        	utils.pickle_write(ch_id, "is_expl_on", False)
+        	answer = "Choosen folder: " +  utils.pickle_read(ch_id, 'curr_dir')
+        	markup = telegram.ReplyKeyboardRemove()
         else:
             print(3)
             answer = "No directory named \"{0}\" in \"{1}\". Try again".format(msg, full_path)
@@ -73,7 +91,7 @@ def echo(bot, upd):
         bot.sendMessage(chat_id=ch_id,
                         text=answer, reply_markup=markup, one_time_keyboard=True)
 
-
+@check_id
 def start(bot, upd):
 #Starts bot, creates shelves for new user and setting up them with default folders for enviroment, where bot working
     new_user = True
@@ -92,12 +110,12 @@ def start(bot, upd):
         reply_text = "You're already my user. Send me /reset to destroy your personal settings"
     bot.sendMessage(chat_id=upd.message.chat_id, text=reply_text)
 
-
+@check_id
 def reset(bot, upd):
     markup = telegram.ReplyKeyboardRemove()
     bot.sendMessage(chat_id=upd.message.chat_id, text=utils.shelve_remove(upd.message.chat_id), reply_markup=markup)    
     
-
+@check_id
 def my_id(bot, upd):
     bot.sendMessage(chat_id=upd.message.chat_id, text= "Your id is: " + str(upd.message.chat_id))
     
