@@ -2,6 +2,7 @@ import os
 import shelve
 import sys
 import pickle
+import platform
 #from config import favorites as fav
 
 
@@ -89,14 +90,35 @@ def pickle_read(id, param_name):
         print(sys.exc_info())
     os.chdir(root_dir)
     return data
+    
+   
+def pickle_remove(id):
+    root_dir = os.getcwd()
+    os.chdir("users_storage")
+    try:
+        for d, dirs, files in os.walk(os.getcwd()):
+            for f in files:   
+                if str(id) in f:
+                        os.remove(f)
+        msg = 'Succesfully removed'
+    except:
+        msg = sys.exc_info()
+    os.chdir(root_dir)
+    return msg
 
     
 def os_choose():  
     if os.name == "nt":
         return {"curr_dir": os.path.expanduser("~"), "Root": "C:/", "Download": os.path.expanduser("~\\Downloads"), "Video": os.path.expanduser("~\\Videos"), "Default folder": os.getcwd()}
     elif os.name == "posix":
-        return {"curr_dir": os.path.expanduser("~"), "Root": "/", "Download": os.path.expanduser("~/Download"), "Movies": os.path.expanduser("~/Movies"), "Default folder": os.getcwd()}
+    	#условие для распознавания системы на андройде, может ложно срабатывать на одноплатниках типа raspberry pi
+        if 'arm' in platform.platform():
+    	    root = '/storage/emulated/0'
+    	    return {"curr_dir": os.getcwd(), "Root": root, "Download": root + "/Download", "Movies": root + "/Movies", "Default folder": os.getcwd()}
+        else:
+            return {"curr_dir": os.path.expanduser("~"), "Root": "/", "Download": os.path.expanduser("~/Download"), "Movies": os.path.expanduser("~/Movies"), "Default folder": os.getcwd()}
     else:
         return {"curr_dir": "/"}
     
 #pickle_write(332761, 'Root', 'C:\\')
+print(pickle_read(332761,'favorites'))
