@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import math
 
-button_list = [x for x in range(25)]
+button_list = [x for x in range(125)]
 pg_num = 2
 blen = len(button_list)
 keyboard = []
-boobs =  16#not my fetish, just max number of Buttons On One Board Setting =) 
+boobs =  25 #not my fetish, just max number of Buttons On One Board Setting =) 
 start = (pg_num-1)*boobs
 stop =  min(pg_num*boobs, blen)
 buttons_on_page_list = button_list[start:stop]

@@ -3,39 +3,18 @@ import shelve
 import sys
 import pickle
 import platform
+import math
 #from config import favorites as fav
 
 
-def create_markup(button_list, sh_id, num=1):
-    n_rows = [0, 0, 0]
+def create_markup(button_list, sh_id, pg_num=1):
     blen = len(button_list)
     keyboard = []
-    if blen == 0:
-        pass
-    elif blen < 10:
-        for i in range(0,blen):
-            n_rows[i % 3] = n_rows[i % 3] + 1
-        n = 0
-        keyboard = [[0] * n_rows[0], [0] * n_rows[1], [0] * n_rows[2]]
-        for l in range(3):
-            j = n_rows[l]
-            for k in range(0, j):
-                keyboard[l][k] = button_list[n]
-                n += 1
-    else:
-        create_markup(button_list[:8], sh_id)
-#        TODO - correctly creating markup for > 9 folders
-#        start = (num-1)*9
-#        stop = blen if blen <= num*9 else num*9
-#        for i in range(0, stop%9-1):
-#            n_rows[i % 3] = n_rows[i % 3] + 1
-#        n = start
-#        keyboard = [[0] * n_rows[0], [0] * n_rows[1], [0] * n_rows[2]]
-#        for l in range(3):
-#            j = n_rows[l]
-#            for k in range(0, j):
-#                keyboard[l][k] = button_list[n]
-#                n += 1
+    boobs =  9 #not my fetish, just max number of Buttons On One Board Setting =) 
+    # boobs should be a square of number max count columns and rows in cusfom reply keyboard.
+    buttons_on_page_list = button_list[(pg_num-1)*boobs:min(pg_num*boobs, blen)]
+    sqrb = int(math.sqrt(boobs))
+    keyboard = [[buttons_on_page_list[x+y*sqrb] for x in range(min(sqrb, 				len(buttons_on_page_list)-y*sqrb))] for y in range(int(math.ceil(len(buttons_on_page_list)/sqrb)))]
     if pickle_read(sh_id, "is_expl_on") == True:
         keyboard.append(["Back", "Done", "More"])
     else:
@@ -43,7 +22,8 @@ def create_markup(button_list, sh_id, num=1):
     return keyboard
 
 
-def explorer(id, next_dir):
+
+def explorer_old(id, next_dir):
     curr_dir = pickle_read(id, "curr_dir")
     if next_dir != "":
         next_dir = "\\" + next_dir
@@ -61,7 +41,10 @@ def explorer(id, next_dir):
             print(sys.exc_info())
             dirs_list = next(os.walk(curr_dir))[1]
             return dirs_list
-
+            
+def explorer(id, next_dir):
+	#todo rewrite explorer with os.chdir())
+    pass
 
 def pickle_write(id, param_name, state):
     root_dir = os.getcwd()
@@ -121,4 +104,4 @@ def os_choose():
         return {"curr_dir": "/"}
     
 #pickle_write(332761, 'Root', 'C:\\')
-print(pickle_read(332761,'favorites'))
+#print(pickle_read(332761,'favorites'))
