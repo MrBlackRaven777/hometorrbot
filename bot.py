@@ -34,11 +34,10 @@ def echo(bot, upd):
     if utils.pickle_read(ch_id,'is_expl_on') == True:
         if msg in dirs:
             print(2)
-            utils.pickle_write(ch_id, "curr_dir", full_path + "\\" + msg)
-            answer = utils.explorer(ch_id, msg)
-            markup = telegram.ReplyKeyboardMarkup(
-                    utils.create_markup(answer, ch_id))
-            answer = None
+            #utils.pickle_write(ch_id, "curr_dir", full_path + "\\" + msg)
+            expl_data = utils.explorer(ch_id, msg)
+            answer = expl_data.get('msg')
+            markup = telegram.ReplyKeyboardMarkup(expl_data.get('dirs_list'))
         elif msg == "Done":
             answer = "Choosen folder: " +  utils.pickle_read(ch_id,'curr_dir')
             markup = telegram.ReplyKeyboardRemove()

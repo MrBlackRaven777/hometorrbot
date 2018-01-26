@@ -44,13 +44,23 @@ def explorer_old(id, next_dir):
             
 def explorer(id, next_dir):
 	#todo rewrite explorer with os.chdir())
-    pass
+	curr_dir = pickle_read(id, "curr_dir")
+	try:
+		os.chdir(next_dir)
+		dirs_list = next(os.walk(os.getcwd()))[1]
+		msg = ''
+		pickle_write(id, 'curr_dir', os.getcwd())
+	except:
+		dirs_list = next(os.walk(curr_dir))[1]
+		msg = sys.exc_info()
+	return {'msg' : msg, 'dirs_list' : dirs_list}
+    
 
 def pickle_write(id, param_name, state):
     root_dir = os.getcwd()
     os.chdir("users_storage")
     name = 'pickle_{0}_{1}.txt'.format(id, param_name)
-    print("Going to write in {3}\\{0} value: {1} : {2}".format(name, param_name, state, os.getcwd()))
+    #print("Going to write in {3}\\{0} value: {1} : {2}".format(name, param_name, state, os.getcwd()))
     try:    
         storage = open(name, 'wb')
         pickle.dump(state, storage)
