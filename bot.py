@@ -12,6 +12,13 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 upd = Updater(token=config.token)
 dsp = upd.dispatcher
 
+#want to colorise  error messages in console output for better debug; synatax: print(R+"some red text"+W)
+W  = '\033[0m'  # white (normal)
+R  = '\033[31m' # red
+G  = '\033[32m' # green
+Y  = '\033[33m' # yellow
+B  = '\033[34m' # blue
+
 
 
 def path(bot, upd):
@@ -26,36 +33,39 @@ def path(bot, upd):
 def echo(bot, upd):
     msg = upd.message.text
     ch_id = upd.message.chat_id
-    favorites = utils.pickle_read(ch_id,'favorites')
-    fav_list = list(favorites.keys())
-    full_path = utils.pickle_read(ch_id, 'curr_dir')
-#    print(full_path)
-    dirs = next(os.walk(full_path))[1]
-    if utils.pickle_read(ch_id,'is_expl_on') == True:
-        if msg in dirs:
+
+    if utils.pickle_read(ch_id,'is_expl_on') == True:    
+        curr_dir = utils.pickle_read(ch_id, 'curr_dir')
+        print(G+'Current directory is: ' + B + curr_dir+W)
+        dirs_list = utils.get_dirs_list(curr_dir)
+        print(G+'Directories here: '+B+str(dirs_list)+W)
+        print(G+'Try to walk into directory ' + B + msg +W)
+        if msg in dirs_list:
             print(2)
-            #utils.pickle_write(ch_id, "curr_dir", full_path + "\\" + msg)
             expl_data = utils.explorer(ch_id, msg)
             answer = expl_data.get('msg')
+#            print(expl_data.get('dirs_list'))
             markup = telegram.ReplyKeyboardMarkup(expl_data.get('dirs_list'))
         elif msg == "Done":
             answer = "Choosen folder: " +  utils.pickle_read(ch_id,'curr_dir')
             markup = telegram.ReplyKeyboardRemove()
         else:
             print(3)
-            answer = "No directory named \"{0}\" in \"{1}\". Try again".format(msg, full_path)
-            markup = telegram.ReplyKeyboardMarkup(utils.create_markup(dirs, ch_id))
+            answer = "No directory named \"%s\" in \"%s\". Try again" % (msg, curr_dir)
+            markup = telegram.ReplyKeyboardMarkup(utils.create_markup(dirs_list, ch_id))
         
         bot.sendMessage(chat_id=ch_id,
                         text=answer, reply_markup=markup)
     else:
+        favorites = utils.pickle_read(ch_id,'favorites')
+        fav_list = list(favorites.keys())
         if msg == 'Choose folder':
-            print(4)
+            print(G+'Echo: choose folder'+W)
             utils.pickle_write(ch_id, "is_expl_on", True)
-            full_path = str(utils.pickle_read(ch_id,'favorites').get("Root"))
-            print(full_path)
-            utils.pickle_write(ch_id, "curr_dir", full_path)
-            answer = utils.explorer(ch_id, "")
+            curr_dir = str(utils.pickle_read(ch_id,'favorites').get("Documents"))
+            print(B + curr_dir + W)
+            utils.pickle_write(ch_id, "curr_dir", curr_dir)
+            answer = utils.explorer(ch_id, "").get('dirs_list')
             markup = telegram.ReplyKeyboardMarkup(
                         utils.create_markup(answer, ch_id))
             answer = "Choose destination folder"
@@ -74,7 +84,7 @@ def echo(bot, upd):
 
 
 def start(bot, upd):
-#Starts bot, creates shelves for new user and setting up them with default folders for enviroment, where bot working
+#Starts bot, creates pickles for new user and setting up them with default folders for bot working enviroment
     new_user = True
     for d, dirs, files in os.walk(os.getcwd()):
         for f in files:   
@@ -95,6 +105,7 @@ def start(bot, upd):
 def reset(bot, upd):
     markup = telegram.ReplyKeyboardRemove()
     bot.sendMessage(chat_id=upd.message.chat_id, text=utils.pickle_remove(upd.message.chat_id), reply_markup=markup)    
+    start(bot, upd)
     
 
 def my_id(bot, upd):

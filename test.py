@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
 import math
+import os
+import utils
+import bot
+from glob import glob
 
-button_list = [x for x in range(125)]
-pg_num = 2
-blen = len(button_list)
-keyboard = []
-boobs =  25 #not my fetish, just max number of Buttons On One Board Setting =) 
-start = (pg_num-1)*boobs
-stop =  min(pg_num*boobs, blen)
-buttons_on_page_list = button_list[start:stop]
-
-sqrb = int(math.sqrt(boobs))
-keyboard = [[buttons_on_page_list[x+y*sqrb] for x in range(min(sqrb, len(buttons_on_page_list)-y*sqrb))] for y in range(int(math.ceil(len(buttons_on_page_list)/sqrb)))]
-print(keyboard)
+#print(utils.pickle_read(332761, 'favorites').get('Documents'))
+print(bot.echo())
+    
+#print(utils.create_markup([],332761))
+#print(glob(os.getcwd()+"\\*"))
