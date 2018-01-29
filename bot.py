@@ -4,6 +4,7 @@ import config
 import utils
 import os
 import logging
+import time
 
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -19,7 +20,7 @@ G  = '\033[32m' # green
 Y  = '\033[33m' # yellow
 B  = '\033[34m' # blue
 
-
+msg_id = 0
 
 def path(bot, upd):
     utils.pickle_write(upd.message.chat_id, "is_expl_on", False)
@@ -33,7 +34,7 @@ def path(bot, upd):
 def echo(bot, upd):
     msg = upd.message.text
     ch_id = upd.message.chat_id
-
+    global msg_id 
     if utils.pickle_read(ch_id,'is_expl_on') == True:    
         curr_dir = utils.pickle_read(ch_id, 'curr_dir')
         print(G+'Current directory is: ' + B + curr_dir+W)
@@ -41,34 +42,44 @@ def echo(bot, upd):
         print(G+'Directories here: '+B+str(dirs_list)+W)
         print(G+'Try to walk into directory ' + B + msg +W)
         if msg in dirs_list:
-            print(2)
+            print(msg)
             expl_data = utils.explorer(ch_id, msg)
-            answer = expl_data.get('msg')
-#            print(expl_data.get('dirs_list'))
-            markup = telegram.ReplyKeyboardMarkup(expl_data.get('dirs_list'))
+#            answer = expl_data.get('msg')
+            answer = "Choose destination folder. Current folder is: " + utils.pickle_read(ch_id, 'curr_dir')
+            print(G+'Got answer: '+B+answer+W)
+            print(G+'start making markup. data: ' +B+str(expl_data.get('dirs_list'))+W)
+            markup = telegram.ReplyKeyboardMarkup(utils.create_markup(expl_data.get('dirs_list'),ch_id))
         elif msg == "Done":
             answer = "Choosen folder: " +  utils.pickle_read(ch_id,'curr_dir')
+            utils.pickle_write(ch_id, 'is_expl_on', False)
+            utils.pickle_write(ch_id, 'curr_dir', os.path.expanduser("~\\Documents"))
             markup = telegram.ReplyKeyboardRemove()
+        elif msg == "Back":
+#            TODO
+            pass
         else:
             print(3)
             answer = "No directory named \"%s\" in \"%s\". Try again" % (msg, curr_dir)
             markup = telegram.ReplyKeyboardMarkup(utils.create_markup(dirs_list, ch_id))
         
-        bot.sendMessage(chat_id=ch_id,
-                        text=answer, reply_markup=markup)
+#        bot.edit_message_text(chat_id=ch_id,
+#                        text=answer, message_id = msg_id)
+        bot.delete_message(chat_id=ch_id, message_id = msg_id)
+        msg_id = bot.sendMessage(chat_id=ch_id,
+                        text=answer, reply_markup=markup, one_time_keyboard=False).message_id
     else:
         favorites = utils.pickle_read(ch_id,'favorites')
         fav_list = list(favorites.keys())
         if msg == 'Choose folder':
             print(G+'Echo: choose folder'+W)
             utils.pickle_write(ch_id, "is_expl_on", True)
-            curr_dir = str(utils.pickle_read(ch_id,'favorites').get("Documents"))
+            curr_dir = str(utils.pickle_read(ch_id,'curr_dir'))
             print(B + curr_dir + W)
             utils.pickle_write(ch_id, "curr_dir", curr_dir)
             answer = utils.explorer(ch_id, "").get('dirs_list')
             markup = telegram.ReplyKeyboardMarkup(
                         utils.create_markup(answer, ch_id))
-            answer = "Choose destination folder"
+            answer = "Choose destination folder. Current folder is: " + curr_dir
             
         elif msg in fav_list:
             print(1)
@@ -79,8 +90,11 @@ def echo(bot, upd):
         else:
             answer = "Unknown command"
             markup = telegram.ReplyKeyboardRemove()
-        bot.sendMessage(chat_id=ch_id,
-                        text=answer, reply_markup=markup, one_time_keyboard=True)
+        
+        msg_id = bot.sendMessage(chat_id=ch_id, reply_markup=markup,
+                        text=answer, one_time_keyboard=False).message_id
+#        bot.sendMessage(chat_id=ch_id,
+#                        text=answer, reply_markup=markup, one_time_keyboard=True)
 
 
 def start(bot, upd):
@@ -112,6 +126,13 @@ def my_id(bot, upd):
     bot.sendMessage(chat_id=upd.message.chat_id, text= "Your id is: " + str(upd.message.chat_id))
     
 
+def edit_last(bot, upd):
+    msgid = bot.sendMessage(chat_id=upd.message.chat_id, text= "textextext").message_id
+    time.sleep(5)
+    print(msgid)
+    msgid2 = bot.edit_message_text(text='some text', chat_id = upd.message.chat_id, message_id = msgid).message_id
+    print(msgid2)
+
 
 path_handler = CommandHandler("path", path)
 dsp.add_handler(path_handler)
@@ -127,6 +148,9 @@ dsp.add_handler(echo_handler)
 
 myid_handler = CommandHandler("myid", my_id)
 dsp.add_handler(myid_handler)
+
+edit_handler = CommandHandler("edit", edit_last)
+dsp.add_handler(edit_handler)
 
 upd.start_polling()
 upd.idle()

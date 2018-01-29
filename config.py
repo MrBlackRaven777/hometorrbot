@@ -1,6 +1,5 @@
 import os
 
-
 token = "345248007:AAF4R8mKESAnqBn_jXOReMLbatqMzz8TMwc" #Your bot's token from BotFather
 
 allowed_id = ("332761", "115934446") #IDs of users, who can use this bot "332761", 
@@ -15,3 +14,5 @@ if os.name == "nt":
     divider = '\\'
 else:
     divider = '/'
+    
+project_name = 'hometorrbot'

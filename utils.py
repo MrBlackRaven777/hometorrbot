@@ -5,6 +5,7 @@ import sys
 import pickle
 import platform
 import math
+import glob
 #from config import favorites as fav
 W  = '\033[0m'  # white (normal)
 R  = '\033[31m' # red
@@ -17,15 +18,22 @@ def create_markup(button_list, sh_id, pg_num=1):
     keyboard = []
     boobs =  9 #not my fetish, just max number of Buttons On One Board Setting =) 
     # boobs should be a square of number max count columns and rows in cusfom reply keyboard.
-    buttons_on_page_list = button_list[(pg_num-1)*boobs:min(pg_num*boobs, blen)]
-    sqrb = int(math.sqrt(boobs))
-    keyboard = [[buttons_on_page_list[x+y*sqrb] for x in range(min(sqrb, len(buttons_on_page_list)-y*sqrb))] 
-                for y in range(int(math.ceil(len(buttons_on_page_list)/sqrb)))]
-    if pickle_read(sh_id, "is_expl_on") == True:
-        keyboard.append(["Back", "Done", "More"])
-    else:
-        keyboard.append(['Choose folder', 'Cancel'])
-    return keyboard
+    print(G+'Create markup started'+W)
+    try:
+        buttons_on_page_list = button_list[(pg_num-1)*boobs:min(pg_num*boobs, blen)]
+        print(G+'BOPL: ' + B+str(buttons_on_page_list)+W)
+        sqrb = int(math.sqrt(boobs))
+        keyboard = [[buttons_on_page_list[x+y*sqrb] for x in range(min(sqrb, len(buttons_on_page_list)-y*sqrb))] 
+                    for y in range(int(math.ceil(len(buttons_on_page_list)/sqrb)))]
+        if pickle_read(sh_id, "is_expl_on") == True:
+            keyboard.append(["Back", "Done", "More"])
+        else:
+            keyboard.append(['Choose folder', 'Cancel'])
+        print(G+'Create markup: '+ B+str(keyboard)+W)
+        return keyboard
+    except:
+        print(G+'Create markup error: '+ B+str(sys.exc_info())+W)
+        return keyboard
 
 
 
@@ -64,12 +72,12 @@ def explorer(id, next_dir):
         os.chdir(next_dir)
         print(G+'Explorer : changed dir to ' + B+ os.getcwd()+ W)
         dirs_list = get_dirs_list(os.getcwd())
-        print(G+'Explorer : get dirs list: ' + B+ dirs_list+ W)
+        print(G+'Explorer : get dirs list: ' + B+ str(dirs_list)+ W)
         msg = ''
         pickle_write(id, 'curr_dir', os.getcwd())
     except FileNotFoundError:
         dirs_list = get_dirs_list(curr_dir)
-        print(G+'Explorer : FNF error, get prev dirs list: ' + B+ dirs_list+ W)
+        print(G+'Explorer : FNF error, get prev dirs list: ' + B+ str(dirs_list)+ W)
         msg = "No directory named \"%s\" in %s" % (next_dir, curr_dir)
     except:
         print(G+'Explorer: caught an unexpected error, see in msg'+W)
@@ -86,7 +94,7 @@ def explorer(id, next_dir):
 
 def pickle_write(id, param_name, state):
     root_dir = os.getcwd()
-    os.chdir("users_storage")
+    os.chdir(os.path.join(home_dir(), "users_storage"))
     name = 'pickle_{0}_{1}.txt'.format(id, param_name)
     #print("Going to write in {3}\\{0} value: {1} : {2}".format(name, param_name, state, os.getcwd()))
     try:    
@@ -100,7 +108,7 @@ def pickle_write(id, param_name, state):
 
 def pickle_read(id, param_name):
     root_dir = os.getcwd()
-    os.chdir("users_storage")
+    os.chdir(os.path.join(home_dir(), "users_storage"))
     name = 'pickle_{0}_{1}.txt'.format(id, param_name)
     try:    
         storage = open(name, 'rb')
@@ -116,7 +124,7 @@ def pickle_read(id, param_name):
    
 def pickle_remove(id):
     root_dir = os.getcwd()
-    os.chdir("users_storage")
+    os.chdir(os.path.join(home_dir(), "users_storage"))
     try:
         for d, dirs, files in os.walk(os.getcwd()):
             for f in files:   
@@ -151,5 +159,21 @@ def os_choose():
     else:
         return {"curr_dir": "/"}
     
-#pickle_write(332761, 'Root', 'C:\\')
+def home_dir(direct=config.project_name, top=os.getcwd()):
+    found = False
+    for root, dirs, files in os.walk(top):
+        for name in dirs:
+            if name == direct:
+#                print("Found folder " + direct + " in " + root)
+                found = True
+                return root+os.path.sep+direct
+    if found == False:
+        new_top = os.path.split(top)[0]
+#        print("Try to search in "+new_top)
+        return home_dir(direct,new_top)
+
+    
+    
+#pickle_write(332761, 'curr_dir', 'C:\\Users\\d.voskresenskiy\\Documents')
 #print(pickle_read(332761,'favorites'))
+#print(home_dir())
