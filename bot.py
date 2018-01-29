@@ -52,11 +52,13 @@ def echo(bot, upd):
         elif msg == "Done":
             answer = "Choosen folder: " +  utils.pickle_read(ch_id,'curr_dir')
             utils.pickle_write(ch_id, 'is_expl_on', False)
-            utils.pickle_write(ch_id, 'curr_dir', os.path.expanduser("~\\Documents"))
+            utils.pickle_write(ch_id, 'curr_dir', utils.pickle_read(ch_id, 'favorites').get('Root'))
             markup = telegram.ReplyKeyboardRemove()
         elif msg == "Back":
-#            TODO
-            pass
+            expl_data = utils.explorer(ch_id, down=False)
+            answer = "Choosen folder: " +  utils.pickle_read(ch_id,'curr_dir')
+            markup = telegram.ReplyKeyboardMarkup(utils.create_markup(expl_data.get('dirs_list'),ch_id))
+        	
         else:
             print(3)
             answer = "No directory named \"%s\" in \"%s\". Try again" % (msg, curr_dir)

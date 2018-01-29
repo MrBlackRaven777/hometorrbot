@@ -45,3 +45,5 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 #print(utils.home_dir())
 #print(os.path.join(utils.home_dir(), "users_storage"))
+
+print(os.path.split('C:/Userslol/')[0])

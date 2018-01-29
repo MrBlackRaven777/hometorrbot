@@ -35,7 +35,25 @@ def create_markup(button_list, sh_id, pg_num=1):
         print(G+'Create markup error: '+ B+str(sys.exc_info())+W)
         return keyboard
 
-
+def explorer(id, next_dir='', down=True):
+	curr_dir = pickle_read(id, 'curr_dir')
+	if down == True:
+		os.chdir(os.path.join(curr_dir, next_dir))
+		dirs_list = get_dirs_list(os.getcwd())
+		pickle_write(id, 'curr_dir', os.getcwd())
+		msg=''
+	else:
+		prev_dir = os.path.split(curr_dir)[0]
+		if os.path.exists(prev_dir):
+			os.chdir(prev_dir)
+			dirs_list = get_dirs_list(prev_dir)
+			pickle_write(id, 'curr_dir', prev_dir)
+			msg=''
+		else:
+			dirs_list=get_dirs_list(curr_dir)
+			msg='there is no path '+prev_dir
+	return {'msg' : msg, 'dirs_list' : dirs_list}
+			
 
 def explorer_old(id, next_dir):
     curr_dir = pickle_read(id, "curr_dir")
@@ -56,14 +74,14 @@ def explorer_old(id, next_dir):
             dirs_list = next(os.walk(curr_dir))[1]
             return dirs_list
             
-def explorer(id, next_dir):
+def explorer_mid(id, next_dir='', down=True):
     print(G+'Explorer: get values: '+B+str(id)+'   '+next_dir+W)
 	#todo rewrite explorer with os.chdir())
     curr_dir = pickle_read(id, "curr_dir")
     print(G+'Explorer : curr_dir = ' + B+ curr_dir+ W)
     root_dir = os.getcwd()
     print(G+'Explorer : root_dir = ' + B+ root_dir+ W)
-    next_dir = curr_dir + config.divider + next_dir
+    #next_dir = curr_dir + os.path.sep + next_dir
     print(G+'Explorer : next_dir = ' + B+ next_dir+ W)
     dirs_list=[]
     try:
@@ -174,6 +192,6 @@ def home_dir(direct=config.project_name, top=os.getcwd()):
 
     
     
-#pickle_write(332761, 'curr_dir', 'C:\\Users\\d.voskresenskiy\\Documents')
+#pickle_write(332761, 'curr_dir', '/storage/emulated/0')
 #print(pickle_read(332761,'favorites'))
 #print(home_dir())
