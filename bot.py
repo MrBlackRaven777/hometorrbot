@@ -36,6 +36,7 @@ def echo(bot, upd):
     msg = upd.message.text
     ch_id = upd.message.chat_id
     global msg_id 
+    global kb_page
     if utils.pickle_read(ch_id,'is_expl_on') == True:    
         curr_dir = utils.pickle_read(ch_id, 'curr_dir')
         print(G+'Current directory is: ' + B + curr_dir+W)
@@ -43,6 +44,7 @@ def echo(bot, upd):
         print(G+'Directories here: '+B+str(dirs_list)+W)
         print(G+'Try to walk into directory ' + B + msg +W)
         if msg in dirs_list:
+            kb_page = 1
             print(msg)
             expl_data = utils.explorer(ch_id, msg)
 #            answer = expl_data.get('msg')
@@ -51,18 +53,24 @@ def echo(bot, upd):
             print(G+'start making markup. data: ' +B+str(expl_data.get('dirs_list'))+W)
             markup = telegram.ReplyKeyboardMarkup(utils.create_markup(expl_data.get('dirs_list'),ch_id))
         elif msg == "Done":
+            kb_page = 1
             answer = "Choosen folder: " +  utils.pickle_read(ch_id,'curr_dir')
             utils.pickle_write(ch_id, 'is_expl_on', False)
             utils.pickle_write(ch_id, 'curr_dir', utils.pickle_read(ch_id, 'favorites').get('Root'))
             markup = telegram.ReplyKeyboardRemove()
         elif msg == "Back":
+            kb_page = 1
             expl_data = utils.explorer(ch_id, down=False)
             answer = "Choosen folder: " +  utils.pickle_read(ch_id,'curr_dir')
             markup = telegram.ReplyKeyboardMarkup(utils.create_markup(expl_data.get('dirs_list'),ch_id))
-        elif msg == "More"
+        elif msg == "More -->":
+            kb_page+=1
             answer = "Choosen folder: " +  utils.pickle_read(ch_id, 'curr_dir')
-            markup = telegram.ReplyKeyboardMarkup(utils.create_markup(utils.get_dirs_list(curr_dir),ch_id))
-            pass #TODO
+            markup = telegram.ReplyKeyboardMarkup(utils.create_markup(utils.get_dirs_list(curr_dir), ch_id, pg_num=kb_page))
+        elif msg == "<-- Less":
+            kb_page-=1
+            answer = "Choosen folder: " +  utils.pickle_read(ch_id, 'curr_dir')
+            markup = telegram.ReplyKeyboardMarkup(utils.create_markup(utils.get_dirs_list(curr_dir), ch_id, pg_num=kb_page))
         else:
             print(3)
             answer = "No directory named \"%s\" in \"%s\". Try again" % (msg, curr_dir)
@@ -71,8 +79,9 @@ def echo(bot, upd):
 #        bot.edit_message_text(chat_id=ch_id,
 #                        text=answer, message_id = msg_id)
         bot.delete_message(chat_id=ch_id, message_id = msg_id)
-        msg_id = bot.sendMessage(chat_id=ch_id,
-                        text=answer, reply_markup=markup, one_time_keyboard=False).message_id
+        time.sleep(0.1) #needs to fix kb, when old custom kb removing, default kb layovers and if in this time switch on custom kb, it will underlays default kb and both of them hiding down
+        #фикс для клавиатуры, когда удаляется сообщение, то старая клава убирается, вместо нее автоматом появляется обычная клава, если в этот момент придет новая кастомная, то она просто подсунется под стандартную, поэтому делаем задержку, чтоб инициализировалась стандарная, и поверх нее даем новую кастомную
+        msg_id = bot.sendMessage(chat_id=ch_id, text=answer, reply_markup=markup, one_time_keyboard=False).message_id
     else:
         favorites = utils.pickle_read(ch_id,'favorites')
         fav_list = list(favorites.keys())
@@ -98,7 +107,7 @@ def echo(bot, upd):
             markup = telegram.ReplyKeyboardRemove()
         
         msg_id = bot.sendMessage(chat_id=ch_id, reply_markup=markup,
-                        text=answer, one_time_keyboard=False).message_id
+                        text=answer).message_id
 #        bot.sendMessage(chat_id=ch_id,
 #                        text=answer, reply_markup=markup, one_time_keyboard=True)
 
