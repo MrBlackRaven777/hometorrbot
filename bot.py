@@ -21,6 +21,7 @@ Y  = '\033[33m' # yellow
 B  = '\033[34m' # blue
 
 msg_id = 0
+kb_page = 1
 
 def path(bot, upd):
     utils.pickle_write(upd.message.chat_id, "is_expl_on", False)
@@ -58,7 +59,10 @@ def echo(bot, upd):
             expl_data = utils.explorer(ch_id, down=False)
             answer = "Choosen folder: " +  utils.pickle_read(ch_id,'curr_dir')
             markup = telegram.ReplyKeyboardMarkup(utils.create_markup(expl_data.get('dirs_list'),ch_id))
-        	
+        elif msg == "More"
+            answer = "Choosen folder: " +  utils.pickle_read(ch_id, 'curr_dir')
+            markup = telegram.ReplyKeyboardMarkup(utils.create_markup(utils.get_dirs_list(curr_dir),ch_id))
+            pass #TODO
         else:
             print(3)
             answer = "No directory named \"%s\" in \"%s\". Try again" % (msg, curr_dir)

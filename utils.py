@@ -14,6 +14,7 @@ Y  = '\033[33m' # yellow
 B  = '\033[34m' # blue
 
 def create_markup(button_list, sh_id, pg_num=1):
+    button_list.sort()
     blen = len(button_list)
     keyboard = []
     boobs =  9 #not my fetish, just max number of Buttons On One Board Setting =) 
@@ -26,10 +27,18 @@ def create_markup(button_list, sh_id, pg_num=1):
         keyboard = [[buttons_on_page_list[x+y*sqrb] for x in range(min(sqrb, len(buttons_on_page_list)-y*sqrb))] 
                     for y in range(int(math.ceil(len(buttons_on_page_list)/sqrb)))]
         if pickle_read(sh_id, "is_expl_on") == True:
-            keyboard.append(["Back", "Done", "More"])
+            if pg_num==1 and blen>boobs:
+                last_row = ["Back", "Done", "More -->"]
+            elif len(button_list[(pg_num-1)*boobs:]) > boobs:
+                last_row = ["Back", "<-- Less", "More -->"]
+            elif len(button_list[(pg_num-1)*boobs:]) <= boobs and pg_num > 1:
+                last_row = ["Back", "<-- Less"]
+            elif pg_num == 1 and blen <= boobs:
+                last_row = ["Back", "Done"]
         else:
-            keyboard.append(['Choose folder', 'Cancel'])
+            last_row = ['Choose folder', 'Cancel']
         print(G+'Create markup: '+ B+str(keyboard)+W)
+        keyboard.append(last_row)
         return keyboard
     except:
         print(G+'Create markup error: '+ B+str(sys.exc_info())+W)
