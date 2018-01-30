@@ -1,15 +1,8 @@
 # -*- coding: utf-8 -*-
-import math
-import os
 import utils
 import config
-import logging
-import telegram
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
 
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                     level=logging.INFO)
 
 #upd = Updater(token=config.token)
 #dsp = upd.dispatcher
@@ -46,4 +39,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 #print(utils.home_dir())
 #print(os.path.join(utils.home_dir(), "users_storage"))
 
-print(os.path.split('C:/Userslol/')[0])
+#print(os.path.split('C:/Userslol/')[0])
+print(config.project_name)
+print(utils.pickle_read(332761,'favorites'))
+#print(utils.)

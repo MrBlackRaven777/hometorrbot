@@ -1,24 +1,32 @@
 import config
 import os
+import shelve
 import sys
 import pickle
 import platform
 import math
-#from bot import is_expl_on as is_expl_on
+import glob
+#from config import favorites as fav
+W  = '\033[0m'  # white (normal)
+R  = '\033[31m' # red
+G  = '\033[32m' # green
+Y  = '\033[33m' # yellow
+B  = '\033[34m' # blue
 
-
-def create_markup(button_list, is_expl_on, pg_num=1):
+def create_markup(button_list, sh_id, pg_num=1):
     button_list.sort()
     blen = len(button_list)
     keyboard = []
     boobs =  9 #not my fetish, just max number of Buttons On One Board Setting =) 
     # boobs should be a square of number max count columns and rows in cusfom reply keyboard.
+    print(G+'Create markup started'+W)
     try:
         buttons_on_page_list = button_list[(pg_num-1)*boobs:min(pg_num*boobs, blen)]
+        print(G+'BOPL: ' + B+str(buttons_on_page_list)+W)
         sqrb = int(math.sqrt(boobs))
         keyboard = [[buttons_on_page_list[x+y*sqrb] for x in range(min(sqrb, len(buttons_on_page_list)-y*sqrb))] 
                     for y in range(int(math.ceil(len(buttons_on_page_list)/sqrb)))]
-        if is_expl_on == True:
+        if pickle_read(sh_id, "is_expl_on") == True:
             if pg_num==1 and blen>boobs:
                 last_row = ["Back", "Done", "More -->"]
             elif len(button_list[(pg_num-1)*boobs:]) > boobs:
@@ -29,16 +37,16 @@ def create_markup(button_list, is_expl_on, pg_num=1):
                 last_row = ["Back", "Done"]
         else:
             last_row = ['Choose folder', 'Cancel']
+        print(G+'Create markup: '+ B+str(keyboard)+W)
         keyboard.append(last_row)
         return keyboard
     except:
+        print(G+'Create markup error: '+ B+str(sys.exc_info())+W)
         return keyboard
 
-def explorer(id, next_dir='', up=True):
-#explore your filesystem, goes to the next_dir, up - is direction, where it goes in directory tree, 
-#    where at the bottom is root directory, and at the top your folders
+def explorer(id, next_dir='', down=True):
 	curr_dir = pickle_read(id, 'curr_dir')
-	if up == True:
+	if down == True:
 		os.chdir(os.path.join(curr_dir, next_dir))
 		dirs_list = get_dirs_list(os.getcwd())
 		pickle_write(id, 'curr_dir', os.getcwd())
@@ -52,14 +60,70 @@ def explorer(id, next_dir='', up=True):
 			msg=''
 		else:
 			dirs_list=get_dirs_list(curr_dir)
-			msg='there is no path ' + prev_dir
+			msg='there is no path '+prev_dir
 	return {'msg' : msg, 'dirs_list' : dirs_list}
 			
+
+def explorer_old(id, next_dir):
+    curr_dir = pickle_read(id, "curr_dir")
+    if next_dir != "":
+        next_dir = "\\" + next_dir
+    if curr_dir is None:
+        return "No path"
+    else:
+        
+        full_path = curr_dir + next_dir
+        print(full_path)
+        try:
+            dirs_list = next(os.walk(full_path))[1]
+            print(dirs_list)
+            return dirs_list
+        except:
+            print(sys.exc_info())
+            dirs_list = next(os.walk(curr_dir))[1]
+            return dirs_list
+            
+def explorer_mid(id, next_dir='', down=True):
+    print(G+'Explorer: get values: '+B+str(id)+'   '+next_dir+W)
+	#todo rewrite explorer with os.chdir())
+    curr_dir = pickle_read(id, "curr_dir")
+    print(G+'Explorer : curr_dir = ' + B+ curr_dir+ W)
+    root_dir = os.getcwd()
+    print(G+'Explorer : root_dir = ' + B+ root_dir+ W)
+    #next_dir = curr_dir + os.path.sep + next_dir
+    print(G+'Explorer : next_dir = ' + B+ next_dir+ W)
+    dirs_list=[]
+    try:
+#        os.chdir(curr_dir)
+#        print(G+'Explorer : changed dir to ' + B+ os.getcwd()+ W)
+        os.chdir(next_dir)
+        print(G+'Explorer : changed dir to ' + B+ os.getcwd()+ W)
+        dirs_list = get_dirs_list(os.getcwd())
+        print(G+'Explorer : get dirs list: ' + B+ str(dirs_list)+ W)
+        msg = ''
+        pickle_write(id, 'curr_dir', os.getcwd())
+    except FileNotFoundError:
+        dirs_list = get_dirs_list(curr_dir)
+        print(G+'Explorer : FNF error, get prev dirs list: ' + B+ str(dirs_list)+ W)
+        msg = "No directory named \"%s\" in %s" % (next_dir, curr_dir)
+    except:
+        print(G+'Explorer: caught an unexpected error, see in msg'+W)
+        dirs_list = get_dirs_list(curr_dir)
+        msg = sys.exc_info()
+#        for a,b,c in msg:
+#            for d in c:
+#                print(G+'Explorer Error: ' + R + d + W)
+    os.chdir(root_dir)
+    print(G+'Explorer: change dir to ' + B+ os.getcwd()+ W)
+    print(G+'Explorer: Going to return: '+B+str({'msg' : msg, 'dirs_list' : dirs_list})+W)
+    return {'msg' : msg, 'dirs_list' : dirs_list}
+    
 
 def pickle_write(id, param_name, state):
     root_dir = os.getcwd()
     os.chdir(os.path.join(home_dir(), "users_storage"))
     name = 'pickle_{0}_{1}.txt'.format(id, param_name)
+    #print("Going to write in {3}\\{0} value: {1} : {2}".format(name, param_name, state, os.getcwd()))
     try:    
         storage = open(name, 'wb')
         pickle.dump(state, storage)
@@ -77,9 +141,11 @@ def pickle_read(id, param_name):
         storage = open(name, 'rb')
         data = pickle.load(storage)
         storage.close()
+        
     except:
-        data = str(sys.exc_info())
+        print(sys.exc_info())
     os.chdir(root_dir)
+    
     return data
     
    
@@ -103,6 +169,7 @@ def get_dirs_list(path):
         for f,d,fi in os.walk(path):
             dirs_list = d
             break
+        print(G+'Get Dirs List: going to return: '+B+str(dirs_list)+W)
         return dirs_list
 
     
@@ -119,15 +186,21 @@ def os_choose():
     else:
         return {"curr_dir": "/"}
     
-    
-def home_dir(directory=config.project_name, top=os.getcwd()):
-#func for search project directory in tree from top to bottom, need for correct work of pickle
+def home_dir(direct=config.project_name, top=os.getcwd()):
     found = False
     for root, dirs, files in os.walk(top):
         for name in dirs:
-            if name == directory:
+            if name == direct:
+#                print("Found folder " + direct + " in " + root)
                 found = True
-                return root+os.path.sep+directory
+                return root+os.path.sep+direct
     if found == False:
         new_top = os.path.split(top)[0]
-        return home_dir(directory,new_top)
+#        print("Try to search in "+new_top)
+        return home_dir(direct,new_top)
+
+    
+    
+#pickle_write(332761, 'curr_dir', '/storage/emulated/0')
+#print(pickle_read(332761,'favorites'))
+#print(home_dir())

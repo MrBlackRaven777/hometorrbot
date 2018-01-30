@@ -8,11 +8,5 @@ admin_id = ("332761") #ID of admin
 
 notify_not_allowed = True #If True, then admin_id will recieve messages from bot, 
     #when someone not from allowed_id list wil try to use your bot
-
   
-if os.name == "nt":
-    divider = '\\'
-else:
-    divider = '/'
-    
-project_name = 'hometorrbot'
+project_name = 'hometorrbot' #name of folder, where project places on your comp, need to correct search in utils.home_dir
